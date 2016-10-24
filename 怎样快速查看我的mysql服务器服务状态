@@ -61,3 +61,86 @@ Threads: 1  Questions: 10  Slow queries: 0  Opens: 67  Flush tables: 1  Open tab
 --------------
 
 mysql> 
+
+
+
+查看mysql 服务工作的端口号
+
+show global variables like 'port';  
+
+查看mysql 版本号
+
+select version();  
+
+查看当前操作mysql用户
+
+
+select current_user();
+
+
+
+
+
+---------------------------
+
+
+mysql> select current_user();
++----------------+
+| current_user() |
++----------------+
+| root@localhost |
++----------------+
+1 row in set (0.00 sec)
+
+mysql> select version(); 
++-----------+
+| version() |
++-----------+
+| 5.7.13    |
++-----------+
+1 row in set (0.00 sec)
+
+mysql> show global variables like 'port';  
++---------------+-------+
+| Variable_name | Value |
++---------------+-------+
+| port          | 3306  |
++---------------+-------+
+1 row in set (0.00 sec)
+
+mysql> status;
+--------------
+mysql  Ver 14.14 Distrib 5.7.13, for osx10.11 (x86_64) using  EditLine wrapper
+
+Connection id:		214
+Current database:	
+Current user:		root@localhost
+SSL:			Not in use
+Current pager:		stdout
+Using outfile:		''
+Using delimiter:	;
+Server version:		5.7.13 MySQL Community Server (GPL)
+Protocol version:	10
+Connection:		Localhost via UNIX socket
+Server characterset:	latin1
+Db     characterset:	latin1
+Client characterset:	utf8
+Conn.  characterset:	utf8
+UNIX socket:		/tmp/mysql.sock
+Uptime:			26 min 1 sec
+
+Threads: 1  Questions: 245  Slow queries: 0  Opens: 203  Flush tables: 1  Open tables: 196  Queries per second avg: 0.156
+--------------
+
+mysql> 
+
+
+
+
+
+
+
+
+
+
+
