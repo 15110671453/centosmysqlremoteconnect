@@ -1,0 +1,187 @@
+
+
+
+openssl是一个开源程序的套件、这个套件有三个部分组成：一是libcryto，这是一个具有通用功能的加密库，里面实现了众多的加密库；二是libssl，这个是实现ssl机制的，它是用于实现TLS/SSL的功能；三是openssl，是个多功能命令行工具，它可以实现加密解密，甚至还可以当CA来用，可以让你创建证书、吊销证书。
+
+默认情况ubuntu和CentOS上都已安装好openssl。CentOS 6.x 上有关ssl证书的目录结构：
+
+/etc/pki/CA/
+            newcerts    存放CA签署（颁发）过的数字证书（证书备份目录）
+            private     用于存放CA的私钥
+            crl         吊销的证书
+
+/etc/pki/tls/
+             cert.pem    软链接到certs/ca-bundle.crt
+             certs/      该服务器上的证书存放目录，可以房子自己的证书和内置证书
+                   ca-bundle.crt    内置信任的证书
+             private    证书密钥存放目录
+             openssl.cnf    openssl的CA主配置文件
+
+
+
+1. 颁发证书
+1.1 修改CA的一些配置文件
+注意
+CA要给别人颁发证书，首先自己得有一个作为根证书，我们得在一切工作之前修改好CA的配置文件、序列号、索引等等。
+vi /etc/pki/tls/openssl.cnf：
+...
+[ CA_default ]
+
+dir             = /etc/pki/CA           # Where everything is kept
+certs           = $dir/certs            # Where the issued certs are kept
+crl_dir         = $dir/crl              # Where the issued crl are kept
+database        = $dir/index.txt        # database index file.
+#unique_subject = no                    # Set to 'no' to allow creation of
+                                        # several ctificates with same subject.
+new_certs_dir   = $dir/newcerts         # default place for new certs.
+
+certificate     = $dir/cacert.pem       # The CA certificate
+serial          = $dir/serial           # The current serial number
+crlnumber       = $dir/crlnumber        # the current crl number
+                                        # must be commented out to leave a V1 CRL
+crl             = $dir/crl.pem          # The current CRL
+private_key     = $dir/private/cakey.pem # The private key
+RANDFILE        = $dir/private/.rand    # private random number file
+...
+default_days    = 3650                  # how long to certify for
+...
+# For the CA policy
+[ policy_match ]
+countryName             = match
+stateOrProvinceName     = optional
+localityName            = optional
+organizationName        = optional
+organizationalUnitName  = optional
+commonName              = supplied
+emailAddress            = optional
+...
+[ req_distinguished_name ]
+countryName                     = Country Name (2 letter code)
+countryName_default             = CN
+countryName_min                 = 2
+countryName_max                 = 2
+
+stateOrProvinceName             = State or Province Name (full name)
+stateOrProvinceName_default     = GD
+...
+[ req_distinguished_name ] 部分主要是颁证时一些默认的值，可以不动
+
+
+
+touch index.txt serial：
+在CA目录下创建两个初始文件：
+
+# touch index.txt serial
+# echo 01 > serial
+
+1.2 生成根密钥
+# cd /etc/pki/CA/
+# openssl genrsa -out private/cakey.pem 2048
+为了安全起见，修改cakey.pem私钥文件权限为600或400，也可以使用子shell生成( umask 077; openssl genrsa -out private/cakey.pem 2048 )，下面不再重复。
+
+
+
+1.3 生成根证书
+使用req命令生成自签证书：
+
+# openssl req -new -x509 -key private/cakey.pem -out cacert.pem
+会提示输入一些内容，因为是私有的，所以可以随便输入（之前修改的openssl.cnf会在这里呈现），最好记住能与后面保持一致。上面的自签证书cacert.pem应该生成在/etc/pki/CA下。
+
+
+1.4 为我们的nginx web服务器生成ssl密钥
+以上都是在CA服务器上做的操作，而且只需进行一次，现在转到nginx服务器上执行：
+
+# cd /etc/nginx/ssl
+# openssl genrsa -out nginx.key 2048
+这里测试的时候CA中心与要申请证书的服务器是同一个。
+
+1.5 为nginx生成证书签署请求
+# openssl req -new -key nginx.key -out nginx.csr
+...
+Country Name (2 letter code) [AU]:CN
+State or Province Name (full name) [Some-State]:GD
+Locality Name (eg, city) []:SZ
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:COMPANY
+Organizational Unit Name (eg, section) []:IT_SECTION
+Common Name (e.g. server FQDN or YOUR name) []:your.domain.com
+Email Address []:
+
+Please enter the following 'extra' attributes
+to be sent with your certificate request
+A challenge password []:
+An optional company name []:
+...
+同样会提示输入一些内容，其它随便，除了Commone Name一定要是你要授予证书的服务器域名或主机名，challenge password不填。
+
+
+
+1.6 私有CA根据请求来签署证书
+接下来要把上一步生成的证书请求csr文件，发到CA服务器上，在CA上执行：
+
+# openssl ca -in nginx.csr -out nginx.crt
+
+另外在极少数情况下，上面的命令生成的证书不能识别，试试下面的命令：
+# openssl x509 -req -in server.csr -CA /etc/pki/CA/cacert.pem -CAkey /etc/pki/CA/private/cakey.pem -CAcreateserial -out server.crt
+上面签发过程其实默认使用了-cert cacert.pem -keyfile cakey.pem，这两个文件就是前两步生成的位于/etc/pki/CA下的根密钥和根证书。将生成的crt证书发回nginx服务器使用。
+
+到此我们已经拥有了建立ssl安全连接所需要的所有文件，并且服务器的crt和key都位于配置的目录下，剩下的是如何使用证书的问题。
+---------------------------------------------------------------------
+
+3 关于证书申请
+注意，如果对于一般的应用，管理员只需生成“证书请求”（后缀大多为.csr），它包含你的名字和公钥，然后把这份请求交给诸如verisign等有CA服务公司（当然，连同几百美金），你的证书请求经验证后，CA用它的私钥签名，形成正式的证书发还给你。管理员再在web server上导入这个证书就行了。如果你不想花那笔钱，或者想了解一下原理，可以自己做CA。从ca的角度讲，你需要CA的私钥和公钥。从想要证书的服务器角度将，需要把服务器的证书请求交给CA。
+
+如果你要自己做CA，别忘了客户端需要导入CA的证书（CA的证书是自签名的，导入它意味着你“信任”这个CA签署的证书）。而商业CA的一般不用，因为它们已经内置在你的浏览器中了。
+
+
+--------------------------------------------------------------------------------------
+
+单向散列算法
+散列，也称为散列值或消息摘要 ，是一种与基于密钥（对称密钥或公钥）的加密不同的数据转换类型。散列就是通过把一个叫做散列算法的单向数学函数应用于数据，将任意长度的一块数据转换为一个定长的、不可逆转的数字，其长度通常在128～256位之间。所产生的散列值的长度应足够长，因此使找到两块具有相同散列值的数据的机会很少。如发件人生成邮件的散列值并加密它，然后将它与邮件本身一起发送。而收件人同时解密邮件和散列值，并由接收到的邮件产生另外一个散列值，然后将两个散列值进行比较。如果两者相同，邮件极有可能在传输期间没有发生任何改变。
+
+下面是几个常用的散列函数：
+
+MD5：是RSA数据安全公司开发的一种单向散列算法，MD5被广泛使用，可以用来把不同长度的数据块进行暗码运算成一个128位的数值。
+SHA-1：与 DSA 公钥算法相似，安全散列算法1（SHA-1）也是由 NSA 设计的，并由 NIST 将其收录到 FIPS 中，作为散列数据的标准。它可产生一个 160 位的散列值。SHA-1 是流行的用于创建数字签名的单向散列算法。
+MAC（Message Authentication Code）：消息认证代码，是一种使用密钥的单向函数，可以用它们在系统上或用户之间认证文件或消息，常见的是HMAC（用于消息认证的密钥散列算法）。
+CRC（Cyclic Redundancy Check）：循环冗余校验码，CRC校验由于实现简单，检错能力强，被广泛使用在各种数据校验应用中。占用系统资源少，用软硬件均能实现，是进行数据传输差错检测地一种很好的手段（CRC 并不是严格意义上的散列算法，但它的作用与散列算法大致相同，所以归于此类）。
+
+
+
+如发件人生成邮件的散列值并加密它，然后将它与邮件本身一起发送。而收件人同时解密邮件和散列值，并由接收到的邮件产生另外一个散列值，然后将两个散列值进行比较。如果两者相同，邮件极有可能在传输期间没有发生任何改变
+MD5 的使用 在传输中 通过散列值 比对 传输中有没有人篡改数据
+
+
+
+
+公钥加密
+公钥加密使用两个密钥:一个公钥和一个私钥，这两个密钥在数学上是相关的。为了与对称密钥加密相对照，公钥加密有时也叫做不对称密钥加密。在公钥加密中，公钥可在通信双方之间公开传递，或在公用储备库中发布，但相关的私钥是保密的。只有使用私钥才能解密用公钥加密的数据。使用私钥加密的数据只能用公钥解密。下图中，发件人拥有收件人的公钥，并用它加密了一封邮件，但只有收件人掌握解密该邮件的有关私钥。
+
+公钥算法的主要局限在于，这种加密形式的速度相对较低。实际上，通常仅在关键时刻才使用公钥算法，如在实体之间交换对称密钥时，或者在签署一封邮件的散列时（散列是通过应用一种单向数学函数获得的一个定长结果，对于数据而言，叫做散列算法）。将公钥加密与其它加密形式（如对称密钥加密）结合使用，可以优化性能，如数字签名和密钥交换。
+
+常用公钥算法：
+
+RSA：适用于数字签名和密钥交换。 是目前应用最广泛的公钥加密算法，特别适用于通过 Internet 传送的数据，RSA算法以它的三位发明者的名字命名。
+DSA：仅适用于数字签名。 数字签名算法 (Digital Signature Algorithm, DSA) 由美国国家安全署 (United States National Security Agency, NSA) 发明，已作为数字签名的标准。DSA 算法的安全性取决于自计算离散算法的困难。这种算法，不适用于数据加密。
+Diffie-Hellman：仅适用于密钥交换。 Diffie-Hellman 是发明的第一个公钥算法，以其发明者 Whitfield Diffie 和 Martin Hellman 的名字命名。Diffie-Hellman 算法的安全性取决于在一个有限字段中计算离散算法的困难。
+
+
+
+
+对称密钥加密
+对称密钥加密（一个密钥），也叫做共享密钥加密或机密密钥加密，使用发件人和收件人共同拥有的单个密钥。这种密钥既用于加密，也用于解密，叫做机密密钥。对称密钥加密是加密大量数据的一种行之有效的方法。
+
+对称密钥加密有许多种算法如DES,RC4,IDEA等，但所有这些算法都有一个共同的目的：以可还原的方式将明文 （未加密的数据转换为暗文。暗文使用加密密钥编码，对于没有解密密钥的任何人来说它都是没有意义的。由于对称密钥加密在加密和解密时使用相同的密钥，所以这种加密过程的安全性取决于是否有未经授权的人获得了对称密钥。
+
+衡量对称算法优劣的主要尺度是其密钥的长度。密钥越长，在找到解密数据所需的正确密钥之前必须测试的密钥数量就越多。需要测试的密钥越多，破解这种算法就越困难。
+
+
+
+
+
+
+
+
+
+
+
+

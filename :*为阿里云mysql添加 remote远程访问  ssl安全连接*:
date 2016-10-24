@@ -1,0 +1,638 @@
+/*为阿里云mysql添加 remote远程访问  ssl安全连接
+
+阿里云服务器 安装openssl 默认的 证书  公钥 私钥 管理目录
+[root@iZ2850357ruZ etc]# cd ssl
+[root@iZ2850357ruZ ssl]# ls-l
+bash: ls-l: command not found...
+[root@iZ2850357ruZ ssl]# ls -la
+total 16
+drwxr-xr-x   2 root root  4096 May  3 13:48 .
+drwxr-xr-x 149 root root 12288 Oct 24 16:23 ..
+lrwxrwxrwx   1 root root    16 May  3 13:48 certs -> ../pki/tls/certs
+[root@iZ2850357ruZ ssl]# pwd
+/etc/ssl
+[root@iZ2850357ruZ ssl]# 
+
+*/
+
+/*
+openssl 
+OpenSSL是SSL协议/TLS协议的开源实现程序，它由三部分组成
+libcrypto：通用加密库，提供各种加密函数
+
+libssl：TLS/SSL协议的实现；基于会话实现了身份认证、数据机密性和会话完整性的TLS/SSL库
+
+openssl：多用途命令行工具；
+
+     注意：libcrypro和libssl主要是供给开发者使用；在这里我们仅说明一下openssl的使用；
+*/
+
+ssh登录阿里云服务器
+
+Load key "/Users/lixiaoyan/.ssh/aliyunserver": Is a directory
+root@121.42.156.197's password: 
+Permission denied, please try again.
+root@121.42.156.197's password: 
+Last failed login: Mon Oct 24 14:26:08 CST 2016 from 101.36.73.155 on ssh:notty
+There were 259 failed login attempts since the last successful login.
+Last login: Fri Oct 21 09:01:51 2016 from 101.36.73.155
+
+Welcome to aliyun Elastic Compute Service!
+
+[root@iZ2850357ruZ ~]# openssl version
+OpenSSL 1.1.0  25 Aug 2016
+
+
+[root@iZ2850357ruZ ~]# cd /etc
+
+创建以后要存放为mysql 使用的 key 证书 私钥 公钥的 目录
+[root@iZ2850357ruZ etc]# mkdir mysql-ssl
+
+创建存放 openssl key 证书 私钥 公钥 的目录
+[root@iZ2850357ruZ etc]# mkdir sslcert
+[root@iZ2850357ruZ etc]# cd sslcert/
+
+进入存放目录 为工作目录 创建私钥  使用genrsa命令  后面的参数 必须是一个2的N次方的数字
+
+这里生成的ca-key就是密钥 为生成自签证书做准备
+
+[root@iZ2850357ruZ sslcert]# openssl gen rsa 20161024 >ca-key.pem
+Invalid command 'gen'; type "help" for a list.
+[root@iZ2850357ruZ sslcert]# openssl genrsa 20161024 >ca-key.pem
+Generating RSA private key, 20161024 bit long modulus
+.
+^Z  
+[1]+  Stopped                 openssl genrsa 20161024 > ca-key.pem
+[root@iZ2850357ruZ sslcert]# 
+
+这里生成的ca-key就是根密钥 为生成自签根证书做准备
+[root@iZ2850357ruZ sslcert]# openssl genrsa 1024 >ca-key.pem
+Generating RSA private key, 1024 bit long modulus
+................................++++++
+....................................................................++++++
+unable to write 'random state'
+e is 65537 (0x010001)
+[root@iZ2850357ruZ sslcert]# ls -la
+total 20
+drwxr-xr-x   2 root root  4096 Oct 24 14:30 .
+drwxr-xr-x 149 root root 12288 Oct 24 14:28 ..
+-rw-r--r--   1 root root   887 Oct 24 14:35 ca-key.pem
+[root@iZ2850357ruZ sslcert]# vi ca-key.pem 
+
+
+生成自签根证书 依赖 ca-key 根密钥文件 才能生成
+    -x509：自签证书,专用于创建私有CA时；
+    -new：生成新证书签署请求
+    -key：生成请求时用到的私钥文件路径
+    -out：生成的请求文件路径；如果自签操作将直接生成签署过的证书；
+    -days：证书的有效时长，单位是天
+注意：虽然指向的是私钥文件，但是会自动提取出公钥写入；
+
+[root@iZ2850357ruZ sslcert]# openssl req -sha1 -new -x509 -nodes -days 3650 -key ca-key.pem > ca-cert.pem
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [AU]:beijing
+string is too long, it needs to be less than  2 bytes long
+Country Name (2 letter code) [AU]:bj
+State or Province Name (full name) [Some-State]:bj
+Locality Name (eg, city) []:haidian
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:cric
+Organizational Unit Name (eg, section) []:jishubu
+Common Name (e.g. server FQDN or YOUR name) []:mysql
+Email Address []:15110671453@163.com
+[root@iZ2850357ruZ sslcert]# ls -la
+total 24
+drwxr-xr-x   2 root root  4096 Oct 24 14:38 .
+drwxr-xr-x 149 root root 12288 Oct 24 14:28 ..
+-rw-r--r--   1 root root  1042 Oct 24 14:39 ca-cert.pem
+-rw-r--r--   1 root root   887 Oct 24 14:35 ca-key.pem
+[root@iZ2850357ruZ sslcert]# 
+
+
+
+ca-key.pem
+-----BEGIN RSA PRIVATE KEY-----
+MIICXAIBAAKBgQC05Cypk219ycsm/50sO0vWobpgKFQBD91pvg2KZ48MX6QzQJmI
+FaD7ITobAw3cNloycjnKRza9ov6p9IeGszCDpPxA80BGKM+fJr9r0KyHfP+R880A
+uYvNpaEXi/+dmYvPB6XfQwyVNgeTg+fMeQ28dqFv4p87yTkKEYOpZJFgwQIDAQAB
+AoGAIcuPXI8ioaGVxs9yudTKMms8usJOD3S7VQog1X7LhvBHaRvkkzwXO1PV2z4S
+1NWCvHICwfvUClHtais5Nr07jsxCYiFi+45NLkuXDAVrv9o9HztoDsdz74NDAUHB
+FL9yend6hpYGPt49NbyFw2pEbliigEIyflAJ2qP1g6YzfVECQQDhLVfcEQcWOfXS
+p7zZa8/DAZxE3ApsySHtzmYSUYRP2C4660oO0Bp5o8HKHB7PNqomCN99WKa8ejcB
+0KDukD7/AkEAzab3uypK1oVXL1mCttw/gS9bHnBKBsliDemDoPBInO63bFz0Xd40
+5HLKPwh7EKDH8Wdz8iOyWhot2UBMCs4gPwJAdLhfSYheBwxmOxqNjpoO6MNF8H+q
+u7cKak1JpYcxsX2agRoDmmgOwSy8P/qRkdGBIxQIXN3+F8a2Cq/NK7wDmwJAMefy
+9litEKILJlJyhi2su4zib+CQFlWIlhe0+blV5b+Ig6OLKbxi2Y2Bxwon00ExREP2
+vywqe/MebTpNOdILwQJBAMObzQRE5TQNY/+BtBeLL3PkhwXGFiZ7pxnWihib9KVt
+XcmqO8hAXCmX/WoxAJTbEjbtI7ebxnPaH7hHS8uu8d4=
+-----END RSA PRIVATE KEY-----
+
+
+ca-cert.pem
+-----BEGIN CERTIFICATE-----
+MIIC1TCCAj6gAwIBAgIJAITcAhadFR9UMA0GCSqGSIb3DQEBBQUAMIGBMQswCQYD
+VQQGEwJiajELMAkGA1UECAwCYmoxEDAOBgNVBAcMB2hhaWRpYW4xDTALBgNVBAoM
+BGNyaWMxEDAOBgNVBAsMB2ppc2h1YnUxDjAMBgNVBAMMBW15c3FsMSIwIAYJKoZI
+hvcNAQkBFhMxNTExMDY3MTQ1M0AxNjMuY29tMB4XDTE2MTAyNDA2Mzk1OVoXDTI2
+MTAyMjA2Mzk1OVowgYExCzAJBgNVBAYTAmJqMQswCQYDVQQIDAJiajEQMA4GA1UE
+BwwHaGFpZGlhbjENMAsGA1UECgwEY3JpYzEQMA4GA1UECwwHamlzaHVidTEOMAwG
+A1UEAwwFbXlzcWwxIjAgBgkqhkiG9w0BCQEWEzE1MTEwNjcxNDUzQDE2My5jb20w
+gZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALTkLKmTbX3Jyyb/nSw7S9ahumAo
+VAEP3Wm+DYpnjwxfpDNAmYgVoPshOhsDDdw2WjJyOcpHNr2i/qn0h4azMIOk/EDz
+QEYoz58mv2vQrId8/5HzzQC5i82loReL/52Zi88Hpd9DDJU2B5OD58x5Dbx2oW/i
+nzvJOQoRg6lkkWDBAgMBAAGjUzBRMB0GA1UdDgQWBBRbaDHeDtqwyZFILkXu6qFv
+Y0Z3uzAfBgNVHSMEGDAWgBRbaDHeDtqwyZFILkXu6qFvY0Z3uzAPBgNVHRMBAf8E
+BTADAQH/MA0GCSqGSIb3DQEBBQUAA4GBAEBL83jq5/GnEQW5AHBRWWg6UdXEbqWL
+XebzdihUw10h8/dD796Ok69NcirBV2N+hRGGnyrtOgw+3nVqtxMbnKp9Fp8UQY7S
+hGojlzOm2gKUJ1h4u0xO530zSFIdqZ7/jpZ9RnYJ0uNmTuTxat1EF5y2awUoqh/r
+VWWbzoZRXZG4
+-----END CERTIFICATE-----
+
+
+
+
+
+上面生成的两个文件是
+SSL还包括使用 X509标准提供身份认证的算法。
+使用X509，可以识别Internet上的某些人。通常用于电子商务应用程序中。按照基本概念，应有某种称之为“认证机构”(或CA)的机构，可以向请求者分发电子证书。证书依赖非对称加密算法，有两个加密密钥(公共密钥和私人密钥)。认证持有者可以向其它方出示证书来证明身份。证书包括持有者的公共密钥。只能使用对应的私人密钥对含该公共密钥的加密数据进行解密，私人密钥由证书持有者拥有。
+
+
+
+
+-----------------------------
+接下来为服务器生成私钥 与 证书
+
+
+为服务器创建私钥。 server-key 但是多了一个server-rq 为什么呢
+[root@iZ2850357ruZ sslcert]# openssl req -sha1 -newkey rsa:2048 -days 730 -nodes -keyout server-key.pem > server-req.pem
+Generating a 2048 bit RSA private key
+.......................+++
+........................................+++
+writing new private key to 'server-key.pem'
+-----
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [AU]:bj
+State or Province Name (full name) [Some-State]:bj
+Locality Name (eg, city) []:haidian
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:cric
+Organizational Unit Name (eg, section) []:jishubu
+Common Name (e.g. server FQDN or YOUR name) []:mysql
+Email Address []:15110671453@163.com
+
+Please enter the following 'extra' attributes
+to be sent with your certificate request
+A challenge password []:asd1453nmd
+An optional company name []:cric
+[root@iZ2850357ruZ sslcert]# 
+
+
+server-req.pem
+-----BEGIN CERTIFICATE REQUEST-----
+MIIC9zCCAd8CAQAwgYExCzAJBgNVBAYTAmJqMQswCQYDVQQIDAJiajEQMA4GA1UE
+BwwHaGFpZGlhbjENMAsGA1UECgwEY3JpYzEQMA4GA1UECwwHamlzaHVidTEOMAwG
+A1UEAwwFbXlzcWwxIjAgBgkqhkiG9w0BCQEWEzE1MTEwNjcxNDUzQDE2My5jb20w
+ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCyGuZBIHFnfDp8c2AsSSen
+4C6gy3jfWj82m6mFx4qKeOjKJMUsKYM4AMzt2U31holdEKpxI9ugnM1REMZHnH74
+iOZsqRFBbNm3AkrCaVsZOuFPDgPcYwUX4+cx3d/sxiy6INpRdtTsNEd2FKKambLt
+Mje2y+4s3i3bq5sA78lVYbNKBzY5AIiOs9n1EXR/aITSjn0A2yjjCunoblnd+lWO
+3I8IfiW1iYWR8SrXW8/ix0nlThmyJSlG5T/0v3gv1ru7U9wzwJYcHKIVZIW5CpUx
+EgUfQFy1Qey1pQn7p2h9YwSlDlbuBNr7XtdniFaggB07FSZ+tEdgsNGc3mB9bIKn
+AgMBAAGgMDATBgkqhkiG9w0BCQIxBgwEY3JpYzAZBgkqhkiG9w0BCQcxDAwKYXNk
+MTQ1M25tZDANBgkqhkiG9w0BAQUFAAOCAQEAXDcE813n+g7lNHPMev/82jhY04il
+CkTjpqXtpRPXrr/zZS2646JuV2z6x5lE9bXeMSp7TDaOsEshvLQQirdXCmiT6olK
+jvQerBYhJAlhtYG6xk+Co7sRmTISHmEk5O+boMZIXLkRVsN74T5DqbwVXGYwdUUP
+bpiDgwL4RUA7hv+LGYvy1Lc0+B669QhsoRH65DLN3S5KJagiF+RDnXJphv5aSoPE
+7Wyv6p/SR9dOzw6ABU6H6LFXINZXlv/zmq7BIBjPpL1kz6L9sbobYLCgenn474eC
+cGZUQitn1RxY06EJdODXByncPcBiODi4i8Za7RR41lvcJtYFSqgoey4pVw==
+-----END CERTIFICATE REQUEST-----
+
+
+注意上面的命令生成的 server-key 刚开始生成的不是rsa类型的密钥 只是一个私钥文件
+-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDAgvGlV8SEcuZT
+2Om3P4kuNTetR/YzUZye/rVrs3x1n481xYCjW5jQHN3jTjxZOoAYFXIKKXco8uiN
+yR2NjC8b4pepWHLz5Y9/8Bj7uTQVNeEdnjliZHAMyTpCCvqFPow6ShrgR4Dontgx
+QSzgk+1+P9OUqcyq+wweucig4+oepfZFRbUE+nY7P//kep7VEcW85TpKmb4ruu2c
+ojHBzMUPr4VkzFKtfU+D82GTJpbbi/bZ1/NNF0P7X9JTxAIN4+bP/hAEd2ZFcLO7
+odPOt1vVMfPICWBt/zp2uhBEcfMokffm1u5gYf+7usmMuiAptbKZywIKVu8+WDk7
+NJ5xlnUbAgMBAAECggEAep1saBGE24+LYHBSPCM9rq66raWeDIW4qhQ1XUnOxeRB
+BNCs5F9c74DTWwnjqjl2iOBv6EUM3ooI0PX92sAk6S/jxTrOzMW0Jpq4buxBXhkZ
+LxIuHps2Ow6YCqSPd/qkuiOlBqDEXGV/8a8/dDMEG1tv2cpkz6pix9cxEDjaT3Xt
+mGfN9BYeBpXmWoKEfWsqSBOHmHA4SlsyNaQe63EHH5yVJhJyLD72XOoVbtgdEVK8
+voZibJLqebAgFdjScuRUoLw+TfWVDUkdqb09yLeY6tooKSR9wvOPq+6KEykJSH1O
+0QtQexG0+dxSc6c66InAADqCbgVwUAsAOlySv5gXkQKBgQDxxdnBS07/ypNJxaoe
+J1sZpOPhDKeVuo5XHhdcFdp/Nd4WtBfXVaijTOzNLmjDPIp8b7HohSMsjUpxStkX
+w24VXemYVoQpDJhO1XzGOjkmePh7cdHGM6EcQ1KreDOAuiDNfRV8h+n0v+f5/v5U
+Gl9GAQVPCX/5ox5lR5y/6k04xQKBgQDL1wDbYNcakJc9jpyyrKkrXlz5780vL0wu
+YHoNM6S8s+f/MJ2RV/7Z5MSyoqZf+33EcYNwxxx21HNMwnUJ8D2FXc+8V6LhKWbO
+ig9FmSuJ/d6DRRo1PzRcfWC1dbCBEURpdRBdrZ+NBC5Jj9uGfVVdtMjGH1h44Nz5
+V3gLfnMUXwKBgCk7rfSKTHHRcacuP+IeoinQdlDGYLpnc6kl56P70iTJ4hOLKVm/
+MSCQmP4xQQqzA4dPYU8fja0md6C0vCuSV+7q8lDZyHZbwIoJXNtNyLtn/DDJa5Za
+7cotLSczO81jcP66q3RulZb5N63qMCPVz5PXzrj5DMtdZ2ysdu5AHmVlAoGACPq8
+r+1RLHtoHi8VGg3fGej7QYtdx5FW0sgvODupKyLlumki188/i8u3GoNtvtauUKQL
+fUFYMKflOGFslHZ/z0s1pn9Zzn9rZvfP+mnn8Bk93xyBLg1NujFPvE6l6tme4OJm
+SSon2Cdx/o2WxxLoWstm+MtSs2h8c4N151O3sBMCgYEAx2Rs2/h+v04OonJ8ATRi
+UTec1TdB3PUM0jQiPNPQ3u7Epwa6JpEGStuI79qMUCWWiasw2+rkRBgQyxrd4Fyn
+mT34r9czEataGJJQQnFPInx2inMqzC/QD1DfpQKR53o39WdZmCUSJm+KaR1Rqczs
+sanKkx6X1bDVHcfc403vDvc=
+-----END PRIVATE KEY-----
+
+
+从服务器私钥 将私钥文件内容 改为 RSA类型的密钥
+
+[root@iZ2850357ruZ sslcert]#  openssl rsa -in server-key.pem -out server-key.pem
+writing RSA key
+[root@iZ2850357ruZ sslcert]# 
+-----BEGIN RSA PRIVATE KEY-----
+MIIEpQIBAAKCAQEAshrmQSBxZ3w6fHNgLEknp+AuoMt431o/NpuphceKinjoyiTF
+LCmDOADM7dlN9YaJXRCqcSPboJzNURDGR5x++IjmbKkRQWzZtwJKwmlbGTrhTw4D
+3GMFF+PnMd3f7MYsuiDaUXbU7DRHdhSimpmy7TI3tsvuLN4t26ubAO/JVWGzSgc2
+OQCIjrPZ9RF0f2iE0o59ANso4wrp6G5Z3fpVjtyPCH4ltYmFkfEq11vP4sdJ5U4Z
+siUpRuU/9L94L9a7u1PcM8CWHByiFWSFuQqVMRIFH0BctUHstaUJ+6dofWMEpQ5W
+7gTa+17XZ4hWoIAdOxUmfrRHYLDRnN5gfWyCpwIDAQABAoIBAFtTab/5Z80dqUvJ
+SYZL2La/QImY7BjzSLiypwF/KS4KA6wroKMdgjiESJCpvczpOKRs+Ejdjy/TV4B6
+7oEn4P+GC0mqg7udmiG6XiVEKr9MLt3/nME0URdH+HPchob9s0+Zqvjcyx93SzFk
+MWC+8T2pY2IrPazqHG+olemsCvvpKpuhMb2MvYeW6kmWDMCwzU58vVVW6L+KQZEu
+t4KnOJuzTeIOUG2skh2eZIyAA6chYxz3fg5TQbtiyAlzKAZMPSHDaOM/hZQtLE2f
+CA8OCME3twXGxh7CR3ZNP5yUtTDH7DnXiFFEbcYbL4WVS0eD4mi63V8t2tnVZ1kV
+v03KcxkCgYEA5Zf/uuymCeAJe7Fo/XmtyctUOpTcSq44Gc7bx+3nF2JTdGUB4yJ/
+0lzsNzB3BBKmZq1xS8cJeG+9STrLMDovct5FWhM2BqGyhNLSi65zEd0vzOKMhwIo
+Dxk9umPEJh411SRA5cZAAmN+aWC3rR4h5qV71xJX6wNLnBDAEljwaP0CgYEAxpbn
+QUovtFUunbuhSUlRpisN5ON1Niyx9L0cm+gln3aDh+ozc7PPZtf8Sfa1vyqJneZu
+Fd74b0Sm75oUU3d/sOixVhU7r5cJcmomfYqItImYEKiHKgK4bk0acG945lIgS8Zm
+z/BflqQSwa5CG/JvFHGeDD2VxtunGFoNf0YijXMCgYEAoRyhquVHuqRJY1BicYUC
+bBnP2G//ijRpT8r2NXz/bkxkbcg3o9Dgy5jDdhL/YY9Iz8KkP13Dio020f18+jHK
+fBv3pLbYcZzkbgqXDsfzHbUORwMvQ8pCnB3FUFeUHH+UnSYcmGEfJ83ztjTVj5kW
+hwjXN1w678LXOwQSFI3u3m0CgYEAkTA+fmNooSUt4bAN6PCruxr7G36YcTUYHeAt
+DGcbKoyQ+Utmto6dcYkzMDgpBExrNIAFuAO+Cktc6QvzFFrnhkV5cYAwlN2N0JJ+
+9YXVEHkQLg2oVDSM9kd0rwMwluMwLXYuMJSCrjXiaKuoNZp3T7EJZdWYrTxl283q
+1ERIerUCgYEAgkDqQEQRJ6bCkyobSbCa5JBMArXFN5ZWlXdmGaLTQn0WjnXC7tgU
+tRekFsRDGu0H95oWEo1hq9JiqmK6nQ9BbD+wo5wjgP6cL6M+aRSg8/5lYpDSezk6
+Mu1NwQgrqGvVE36r5U/HC602oUPjVaibepLTJm4vnxaZUFbMFvM6ERk=
+-----END RSA PRIVATE KEY-----
+
+
+
+--------------------------------------------------------
+使用 自签名要用的证书 自签名的要用key密钥 还有服务器私钥文件 生成服务器证书
+ openssl x509 -sha1 -req -in server-req.pem -days 730 -CA ca-cert.pem -CAkey ca-key.pem -set_serial 01 > server-cert.pem
+[root@iZ2850357ruZ sslcert]#  openssl x509 -sha1 -req -in server-req.pem -days 730 -CA ca-cert.pem -CAkey ca-key.pem -set_serial 01 > server-cert.pem
+Signature ok
+subject=C = bj, ST = bj, L = haidian, O = cric, OU = jishubu, CN = mysql, emailAddress = 15110671453@163.com
+Getting CA Private Key
+unable to write 'random state'
+
+server-cert.pem
+-----BEGIN CERTIFICATE-----
+MIIC9zCCAmACAQEwDQYJKoZIhvcNAQEFBQAwgYExCzAJBgNVBAYTAmJqMQswCQYD
+VQQIDAJiajEQMA4GA1UEBwwHaGFpZGlhbjENMAsGA1UECgwEY3JpYzEQMA4GA1UE
+CwwHamlzaHVidTEOMAwGA1UEAwwFbXlzcWwxIjAgBgkqhkiG9w0BCQEWEzE1MTEw
+NjcxNDUzQDE2My5jb20wHhcNMTYxMDI0MDcyNzM4WhcNMTgxMDI0MDcyNzM4WjCB
+gTELMAkGA1UEBhMCYmoxCzAJBgNVBAgMAmJqMRAwDgYDVQQHDAdoYWlkaWFuMQ0w
+CwYDVQQKDARjcmljMRAwDgYDVQQLDAdqaXNodWJ1MQ4wDAYDVQQDDAVteXNxbDEi
+MCAGCSqGSIb3DQEJARYTMTUxMTA2NzE0NTNAMTYzLmNvbTCCASIwDQYJKoZIhvcN
+AQEBBQADggEPADCCAQoCggEBALIa5kEgcWd8OnxzYCxJJ6fgLqDLeN9aPzabqYXH
+iop46MokxSwpgzgAzO3ZTfWGiV0QqnEj26CczVEQxkecfviI5mypEUFs2bcCSsJp
+Wxk64U8OA9xjBRfj5zHd3+zGLLog2lF21Ow0R3YUopqZsu0yN7bL7izeLdurmwDv
+yVVhs0oHNjkAiI6z2fURdH9ohNKOfQDbKOMK6ehuWd36VY7cjwh+JbWJhZHxKtdb
+z+LHSeVOGbIlKUblP/S/eC/Wu7tT3DPAlhwcohVkhbkKlTESBR9AXLVB7LWlCfun
+aH1jBKUOVu4E2vte12eIVqCAHTsVJn60R2Cw0ZzeYH1sgqcCAwEAATANBgkqhkiG
+9w0BAQUFAAOBgQCv0/OHaw16lpxNo66N2FjFJLsBjzF9OpNTBYMtJMdqvRb2DdTG
+pfgD/eGR9PTwkzmcR88dQaLjD06iza2fZELusBSzxDRcJ7alb9+H+iQ1aZCJhnU7
+rrNTAxXOI5dm/lI4SzSIeKW5Lj2PC4ls3vUDfk9igeS6Q7HKPdT9lJptmg==
+-----END CERTIFICATE-----
+~                            
+
+
+
+
+
+
+
+-----------------------------
+
+配置MySQL服务器上的SSL
+
+我们应该有了CA证书、服务器的私钥及其证书。下一步就是配置MySQL服务器，以便使用私钥和证书。
+
+在配置MySQL服务器之前，检查一下SSL选项已被启用还是被禁用。为此，登录进入到MySQL服务器，输入下面这个查询。
+mysql> SHOW GLOBAL VARIABLES LIKE 'have_%ssl';
+
+请注意：“have_openssl”和“have_ssl”变量的默认值是“被禁用”，如下所示。想启用MySQL服务器中的SSL，继续执行下列步骤。
+
+1.将ca-cert.pem、server-cert.pem和server-key.pem拷贝或移动到/etc/mysql-ssl/目录下。
+
+[root@iZ2850357ruZ sslcert]# cp ca-cert.pem server-cert.pem  server-key.pem  /etc/mysql-ssl/
+[root@iZ2850357ruZ sslcert]# cd ../
+[root@iZ2850357ruZ etc]# cd mysql-ssl/
+[root@iZ2850357ruZ mysql-ssl]# ls -la
+total 28
+drwxr-xr-x   2 root root  4096 Oct 24 15:32 .
+drwxr-xr-x 149 root root 12288 Oct 24 14:28 ..
+-rw-r--r--   1 root root  1042 Oct 24 15:32 ca-cert.pem
+-rw-r--r--   1 root root  1090 Oct 24 15:32 server-cert.pem
+-rw-------   1 root root  1679 Oct 24 15:32 server-key.pem
+[root@iZ2850357ruZ mysql-ssl]# 
+
+
+
+ 2.使用文本编辑工具，打开服务器的my.cnf配置文件。添加或去掉注释[mysqld]部分中类似下面内容的几行。这些应该指向你放在/etc/mysql-ssl中的私钥和证书。
+[mysqld]
+ssl-ca=/etc/mysql-ssl/ca-cert.pem
+ssl-cert=/etc/mysql-ssl/server-cert.pem
+ssl-key=/etc/mysql-ssl/server-key.pem
+
+
+3. 在my.cnf中，还要找到“bind-address = 127.0.0.1”，并将它改成：
+bind-address = *
+那样一来，你就可以从另一个主机连接到MySQL服务器了。
+
+
+4. 重启MySQL服务。
+$ sudo service mysql restart
+或
+$ sudo systemctl restart mysql
+或
+$ sudo /etc/init.d/mysql restart
+
+
+
+创建拥有SSL权限的用户
+服务器端的SSL配置完成后，下一步就是创建有权通过SSL访问MySQL服务器的用户。为此，登录进入到MySQL服务器，输入下面内容：
+mysql> GRANT ALL PRIVILEGES ON *.* TO ‘ssluser’@’%’ IDENTIFIED BY ‘dingdong’ REQUIRE SSL;
+mysql> FLUSH PRIVILEGES;
+把“ssluser”(用户名)和“dingdong”(密码)换成你自己的用户名和密码。
+如果你想分配一个特定的IP地址(比如192.168.2.8)，以便用户从该地址来访问服务器，那就改而使用下列查询。
+mysql> GRANT ALL PRIVILEGES ON *.* TO ‘ssluser’@’192.168.2.8’ IDENTIFIED BY 'dingdong' REQUIRE SSL;
+mysql> FLUSH PRIVILEGES;
+
+------------------------------
+
+[root@iZ2850357ruZ sslcert]# pwd
+/etc/sslcert
+[root@iZ2850357ruZ sslcert]# 
+
+
+[root@iZ2850357ruZ mysql-ssl]# pwd
+/etc/mysql-ssl
+[root@iZ2850357ruZ mysql-ssl]# ls -la
+
+
+----------------------------
+rsa 提取公钥 
+   一般使用方法 openssl rsa -in  /PATH/FROM/PRIVATE_KEY_FILE  -pubout
+ 例如：
+~]# openssl rsa -in fisrt.pri -pubout
+writing RSA key
+-----BEGIN PUBLIC KEY-----
+MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAL3I5YfgHBp6X8LJLXWb4d09hmjpnW0/
+cO5Hkt45tTaiZtCRnu4vDt0fLKBNVsirztD4mXR6KHvx91pWAMgNR+kCAwEAAQ==
+-----END PUBLIC KEY-----
+
+============================
+
+
+# For advice on how to change settings please see
+# http://dev.mysql.com/doc/refman/5.6/en/server-configuration-defaults.html
+
+[mysqld]
+skip-name-resolve
+#
+# Remove leading # and set to the amount of RAM for the most important data
+# cache in MySQL. Start at 70% of total RAM for dedicated server, else 10%.
+# innodb_buffer_pool_size = 128M
+#
+# Remove leading # to turn on a very important data integrity option: logging
+# changes to the binary log between backups.
+# log_bin
+#
+# Remove leading # to set options mainly useful for reporting servers.
+# The server defaults are faster for transactions and fast SELECTs.
+# Adjust sizes as needed, experiment to find the optimal values.
+# join_buffer_size = 128M
+# sort_buffer_size = 2M
+# read_rnd_buffer_size = 2M
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+bind-address = *
+ssl-ca=/etc/mysql-ssl/ca-cert.pem
+ssl-cert=/etc/mysql-ssl/server-cert.pem
+ssl-key=/etc/mysql-ssl/server-key.pem
+
+# Disabling symbolic-links is recommended to prevent assorted security risks
+symbolic-links=0
+
+# Recommended in standard MySQL setup
+sql_mode=NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES
+
+[mysqld_safe]
+log-error=/var/log/mysqld.log
+pid-file=/var/run/mysqld/mysqld.pid
+
+
+
+
+
+
+
+
+
+配置MySQL客户机上的SSL
+鉴于MySQL服务器端配置已完成，不妨将目光转移到客户机端。就MySQL客户机而言，我们就需要基于服务器的CA私钥和证书，创建新的私钥和证书。
+
+在服务器的CA私钥和证书驻留于其中的MySQL服务器主机上运行下列命令。
+$ openssl req -sha1 -newkey rsa:2048 -days 730 -nodes -keyout client-key.pem > client-req.pem
+类似服务器端配置，上述命令会询问几个问题。只管填好字段，就像前面所做的那样。
+
+
+我们还需要将创建的客户机私钥转换成RSA类型，如下所示。
+$ openssl rsa -in client-key.pem -out client-key.pem
+
+最后，我们需要使用服务器的CA私钥和证书，创建客户机证书。
+$ openssl x509 -sha1 -req -in client-req.pem -days 730 -CA ca-cert.pem -CAkey ca-key.pem -set_serial 01 > client-cert.pem
+
+现在，将ca-cert.pem、client-cert.pem和client-key.pem文件转移到你想要运行MySQL客户机的任何主机上。
+在客户机主机上，使用下面这个命令，通过SSL连接到MySQL服务器。
+$ mysql --ssl-ca=ca-cert.pem --ssl-cert=client-cert.pem --ssl-key=client-key.pem -h -u ssluser -p
+在输入ssluser的密码后，你会看到如往常那样的MySQL提示符。
+想检查一下你有没有使用SSL，在提示符处输入状态命令。
+mysql> status;
+如果你已通过SSL连接上去，它会在SSL字段显示密码信息，如下所示。
+
+如果你不想在命令行中指定客户机证书和私钥信息，可以创建~/.my.cnf文件，然后将下列信息放到 [client]部分下面。
+[client]
+ssl-ca=/path/to/ca-cert.pem
+ssl-cert=/path/to/client-cert.pem
+ssl-key=/path/to/client-key.pem
+之后，你只要使用下面这个命令，就可以通过SSL连接到服务器了。
+$ mysql -h -u ssluser -p
+
+=============================
+openssl 主要使用
+ 1> enc 实现对称加密
+   支持的算法：3des,aes,blowfish,twofish
+   常用选项： 
+           -in  filename：指明需要加密的文件
+           -out filename：指明密文输出的文件
+           -salt：加密时加一点杂质
+           -e ：加密数据
+           -d ：解密数据
+           -des3... ：指明加密算法
+           -a ：使用base64，base64基于64个可打印字符来表示二进制数据。如无此项，加密密文
+                  是乱码
+例如：
+加密
+~]# openssl enc -e -des3 -a -salt -in test -out test.crypt
+解密
+~]# openssl enc -d -des3 -a -salt -out test -in test.crypt
+
+ 2> dgst 实现单向加密
+    dgst命令： openssl dgst -md5 /PATH/TO/SOMRFILE
+ 此处-md5为单向加密算法，此外还有-md2，-md4，-rmd160，-sha，-sha1
+ 3> passwd 生成用户密码
+    openssl passwd -1-salt SALT
+      -1：表示MD5算法，目前仅支持md5算法
+      -salt SALT：SLAT是杂质，一般是随机数。
+ 例如：
+~]# openssl passwd -1 -salt $(openssl rand -hex 4)
+此处说明生成随机数的方法
+openssl rand -hex NUM 即可生成一个16进制字符串
+例如：
+~]# openssl rand -hex 4
+
+
+关于openssl指令的补充说明：
+#openssl [操作]  -out  filename   [bits]
+参数说明：
+[操作]  主要的操作有如下两个：
+      genrsa，建立RSA加密的Public key
+      req，建立凭证要求文件或者是凭证文件
+-out ，后面加上输出的文件名，就是那把key name
+bits，用在genrsa加密的公钥的长度
+-x509，X.509，CertificateData  Management.   一种验证的管理方式
+例：建立一支长度为1024bits的Public Key，注意文件名。
+#openssl genrsa  -out  Server.key 1024
+ 
+ 
+生成证书请求命令：
+#Openssl req  -new  -key file.key  -out  file.csr -config  /path/to/openssl.cnf
+-config：指定openssl的配置文件路径，不指定时，默认会访问Unix格式的默认路径：/usr/local/ssl/openssl.cnf。
+例：#openssl req -new -key server.key -outserver.csr
+
+
+
+
+
+
+
+
+
+==========================================================================
+
+https是一个安全的访问方式，数据在传输过程中是加密的，https基于ssl。
+一、安装apache和ssl模块
+1、安装apache
+
+#yum install httpd
+
+2、安装ssl模块
+
+#yum install mod_ssl
+
+重启apache：
+
+#service httpd restart
+
+安装完mod_ssl会创建一个默认的SSL证书，路径位于/etc/pki/tls，此时可以立即通过https访问服务器了：
+https://Ｘ.Ｘ.Ｘ.Ｘ/
+如果不使用默认的证书，也可以使用openssl手动创建证书。
+二、使用openssl手动创建证书
+1、安装openssl
+
+#yum install openssl
+
+2、生成服务器私钥
+
+#cd /etc/pki/tls
+#openssl genrsa -out server.key 1024
+
+注意：server.key是私钥。
+
+3、用私钥server.key文件生成证书请求文件csr
+
+#openssl req -new -key server.key -out server.csr
+
+注：server.csr是证书请求文件。
+此步骤需要输入一些证书信息：
+Country Name (2 letter code) [XX]:CN
+State or Province Name (full name) []:shanghai
+Locality Name (eg, city) [Default City]:shanghai
+Organization Name (eg, company) [Default Company Ltd]:ccc
+Organizational Unit Name (eg, section) []:bbb
+Common Name (eg, your name or your server's hostname) []:www.test.com
+Email Address []:a@a.com
+输入国家、省份、城市、公司、部门、姓名或服务器名、电子邮箱，随后会要求输入一个challengepassword（密码），无需输入，后面一律直接回车即可。
+4、生成数字签名crt文件（证书文件）
+
+#openssl x509 -days 365 -req -in server.csr -signkey server.key -outserver.crt
+
+用私钥签名证书请求文件，证书的申请机构和颁发机构都是自己。
+5、编辑apache的ssl配置文件
+
+vim/etc/httpd/conf.d/ssl.conf
+/etc/httpd/conf.d/ssl.conf文件配置具体如下：
+ 
+<VirtualHost _default_:443>
+DocumentRoot "/var/www/https"      //设置网页存放目录
+ServerName *:443                  //服务器的端口
+DirectoryIndex index.html index.html.var  //首页名称
+SSLEngine on
+SSLCertificateFile /etc/pki/tls/server.crt     //证书
+SSLCertificateKeyFile /etc/pki/tls/server.key   //私钥
+</VirtualHost> 
+6、重启apache
+#servicehttpd restart
+访问https://ip/，就能看到证书信息了。
+由于不是第三方根证书颁发机构颁发的证书，而是自己颁发的证书，所以浏览器会提示安全证书不受信任。
+ 
+!!!注意：首页index.html 的文件权限为755，否则将会出现如上提示：
+Forbidden
+Youdon't have permission to access /main.html on this server.
+解决方法：修改首页index.html读写权限。
+#Chmod755  index.html
+ 
+ 
+ 
+关于openssl指令的补充说明：
+#openssl [操作]  -out  filename   [bits]
+参数说明：
+[操作]  主要的操作有如下两个：
+      genrsa，建立RSA加密的Public key
+      req，建立凭证要求文件或者是凭证文件
+-out ，后面加上输出的文件名，就是那把key name
+bits，用在genrsa加密的公钥的长度
+-x509，X.509，CertificateData  Management.   一种验证的管理方式
+例：建立一支长度为1024bits的Public Key，注意文件名。
+#openssl genrsa  -out  Server.key 1024
+ 
+ 
+生成证书请求命令：
+#Openssl req  -new  -key file.key  -out  file.csr -config  /path/to/openssl.cnf
+-config：指定openssl的配置文件路径，不指定时，默认会访问Unix格式的默认路径：/usr/local/ssl/openssl.cnf。
+例：#openssl req -new -key server.key -outserver.csr
+
+
+
+
+
