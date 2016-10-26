@@ -1,3 +1,9 @@
+
+
+121.42.156.197 
+/usr/local/nginx/html/svn
+
+
 [root@iZ2850357ruZ ~]# yum install subversion
 Loaded plugins: fastestmirror, langpacks
 base                                                     | 3.6 kB     00:00     
