@@ -1,0 +1,52 @@
+公司机子 自己的 svn测试
+Last login: Wed Oct 26 16:04:17 on ttys000
+bogon:~ lixiaoyan$ which svn
+/usr/bin/svn
+bogon:~ lixiaoyan$ which svnadmin
+/usr/bin/svnadmin
+bogon:~ lixiaoyan$ which svnserve
+/usr/bin/svnserve
+bogon:~ lixiaoyan$ cd Desktop/
+bogon:Desktop lixiaoyan$ cd svnlocal/
+bogon:svnlocal lixiaoyan$ svnadmin create svnkey1
+bogon:svnlocal lixiaoyan$ cd svnkey1/
+lbogon:svnkey1 lixiaoyan$ ls -la
+total 16
+drwxr-xr-x   8 lixiaoyan  staff  272 10 26 16:08 .
+drwxr-xr-x   3 lixiaoyan  staff  102 10 26 16:08 ..
+-rw-r--r--   1 lixiaoyan  staff  246 10 26 16:08 README.txt
+drwxr-xr-x   6 lixiaoyan  staff  204 10 26 16:08 conf
+drwxr-sr-x  15 lixiaoyan  staff  510 10 26 16:08 db
+-r--r--r--   1 lixiaoyan  staff    2 10 26 16:08 format
+drwxr-xr-x  11 lixiaoyan  staff  374 10 26 16:08 hooks
+drwxr-xr-x   4 lixiaoyan  staff  136 10 26 16:08 locks
+bogon:svnkey1 lixiaoyan$ cd ../
+bogon:svnlocal lixiaoyan$ cd svnkey1/
+bogon:svnkey1 lixiaoyan$ vi conf/
+bogon:svnkey1 lixiaoyan$ cd conf/
+bogon:conf lixiaoyan$ vi svnserve.conf 
+bogon:conf lixiaoyan$ vi ls -la
+VIM - Vi IMproved 7.4 (2013 Aug 10, compiled Aug  1 2016 19:37:21)
+Unknown option argument: "-la"
+More info with: "vim -h"
+bogon:conf lixiaoyan$ ls -la
+total 40
+drwxr-xr-x  6 lixiaoyan  staff   204 10 26 16:10 .
+drwxr-xr-x  8 lixiaoyan  staff   272 10 26 16:08 ..
+-rw-r--r--  1 lixiaoyan  staff  1080 10 26 16:08 authz
+-rw-r--r--  1 lixiaoyan  staff   885 10 26 16:08 hooks-env.tmpl
+-rw-r--r--  1 lixiaoyan  staff   309 10 26 16:08 passwd
+-rw-r--r--  1 lixiaoyan  staff  4367 10 26 16:10 svnserve.conf
+bogon:conf lixiaoyan$ vi authz 
+bogon:conf lixiaoyan$ vi passwd 
+bogon:conf lixiaoyan$ svnserve -d -r /Users/lixiaoyan/Desktop/svnlocal
+bogon:conf lixiaoyan$ 
+
+
+svn端口号
+  --listen-port ARG        : listen port. The default port is 3690.
+                             [mode: daemon, listen-once]
+
+                             
+
+使用到集分宝

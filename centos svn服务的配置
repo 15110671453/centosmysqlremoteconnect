@@ -1,0 +1,346 @@
+[root@iZ2850357ruZ ~]# yum install subversion
+Loaded plugins: fastestmirror, langpacks
+base                                                     | 3.6 kB     00:00     
+epel                                                     | 4.3 kB     00:00     
+extras                                                   | 3.4 kB     00:00     
+mysql-connectors-community                               | 2.5 kB     00:00     
+mysql-tools-community                                    | 2.5 kB     00:00     
+mysql56-community                                        | 2.5 kB     00:00     
+updates                                                  | 3.4 kB     00:00     
+(1/5): extras/7/x86_64/primary_db                          | 166 kB   00:00     
+(2/5): epel/x86_64/updateinfo                              | 669 kB   00:00     
+(3/5): mysql-tools-community/x86_64/primary_db             |  29 kB   00:00     
+(4/5): epel/x86_64/primary_db                              | 4.3 MB   00:04     
+(5/5): updates/7/x86_64/primary_db                         | 9.1 MB   00:09     
+Loading mirror speeds from cached hostfile
+ * base: mirrors.aliyun.com
+ * epel: mirrors.aliyun.com
+ * extras: mirrors.aliyun.com
+ * updates: mirrors.aliyun.com
+Resolving Dependencies
+--> Running transaction check
+---> Package subversion.x86_64 0:1.7.14-10.el7 will be installed
+--> Processing Dependency: subversion-libs(x86-64) = 1.7.14-10.el7 for package: subversion-1.7.14-10.el7.x86_64
+--> Processing Dependency: libsvn_wc-1.so.0()(64bit) for package: subversion-1.7.14-10.el7.x86_64
+--> Processing Dependency: libsvn_subr-1.so.0()(64bit) for package: subversion-1.7.14-10.el7.x86_64
+--> Processing Dependency: libsvn_repos-1.so.0()(64bit) for package: subversion-1.7.14-10.el7.x86_64
+--> Processing Dependency: libsvn_ra_svn-1.so.0()(64bit) for package: subversion-1.7.14-10.el7.x86_64
+--> Processing Dependency: libsvn_ra_neon-1.so.0()(64bit) for package: subversion-1.7.14-10.el7.x86_64
+--> Processing Dependency: libsvn_ra_local-1.so.0()(64bit) for package: subversion-1.7.14-10.el7.x86_64
+--> Processing Dependency: libsvn_ra-1.so.0()(64bit) for package: subversion-1.7.14-10.el7.x86_64
+--> Processing Dependency: libsvn_fs_util-1.so.0()(64bit) for package: subversion-1.7.14-10.el7.x86_64
+--> Processing Dependency: libsvn_fs_fs-1.so.0()(64bit) for package: subversion-1.7.14-10.el7.x86_64
+--> Processing Dependency: libsvn_fs_base-1.so.0()(64bit) for package: subversion-1.7.14-10.el7.x86_64
+--> Processing Dependency: libsvn_fs-1.so.0()(64bit) for package: subversion-1.7.14-10.el7.x86_64
+--> Processing Dependency: libsvn_diff-1.so.0()(64bit) for package: subversion-1.7.14-10.el7.x86_64
+--> Processing Dependency: libsvn_delta-1.so.0()(64bit) for package: subversion-1.7.14-10.el7.x86_64
+--> Processing Dependency: libsvn_client-1.so.0()(64bit) for package: subversion-1.7.14-10.el7.x86_64
+--> Processing Dependency: libaprutil-1.so.0()(64bit) for package: subversion-1.7.14-10.el7.x86_64
+--> Processing Dependency: libapr-1.so.0()(64bit) for package: subversion-1.7.14-10.el7.x86_64
+--> Running transaction check
+---> Package apr.x86_64 0:1.4.8-3.el7 will be installed
+---> Package apr-util.x86_64 0:1.5.2-6.el7 will be installed
+---> Package subversion-libs.x86_64 0:1.7.14-10.el7 will be installed
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+================================================================================
+ Package                Arch          Version                 Repository   Size
+================================================================================
+Installing:
+ subversion             x86_64        1.7.14-10.el7           base        1.0 M
+Installing for dependencies:
+ apr                    x86_64        1.4.8-3.el7             base        103 k
+ apr-util               x86_64        1.5.2-6.el7             base         92 k
+ subversion-libs        x86_64        1.7.14-10.el7           base        921 k
+
+Transaction Summary
+================================================================================
+Install  1 Package (+3 Dependent packages)
+
+Total download size: 2.1 M
+Installed size: 7.5 M
+Is this ok [y/d/N]: y
+Downloading packages:
+(1/4): apr-1.4.8-3.el7.x86_64.rpm                          | 103 kB   00:01     
+(2/4): apr-util-1.5.2-6.el7.x86_64.rpm                     |  92 kB   00:01     
+(3/4): subversion-libs-1.7.14-10.el7.x86_64.rpm            | 921 kB   00:02     
+(4/4): subversion-1.7.14-10.el7.x86_64.rpm                 | 1.0 MB   00:02     
+--------------------------------------------------------------------------------
+Total                                              900 kB/s | 2.1 MB  00:02     
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  Installing : apr-1.4.8-3.el7.x86_64                                       1/4 
+  Installing : apr-util-1.5.2-6.el7.x86_64                                  2/4 
+  Installing : subversion-libs-1.7.14-10.el7.x86_64                         3/4 
+  Installing : subversion-1.7.14-10.el7.x86_64                              4/4 
+  Verifying  : subversion-1.7.14-10.el7.x86_64                              1/4 
+  Verifying  : apr-util-1.5.2-6.el7.x86_64                                  2/4 
+  Verifying  : apr-1.4.8-3.el7.x86_64                                       3/4 
+  Verifying  : subversion-libs-1.7.14-10.el7.x86_64                         4/4 
+
+Installed:
+  subversion.x86_64 0:1.7.14-10.el7                                             
+
+Dependency Installed:
+  apr.x86_64 0:1.4.8-3.el7                    apr-util.x86_64 0:1.5.2-6.el7     
+  subversion-libs.x86_64 0:1.7.14-10.el7     
+
+Complete!
+[root@iZ2850357ruZ ~]# svnserver -version
+bash: svnserver: command not found...
+Similar command is: 'svnserve'
+
+
+注意svn命令 是svnserve
+
+
+
+[root@iZ2850357ruZ etc]# svnserve --version
+svnserve, version 1.7.14 (r1542130)
+   compiled Nov 20 2015, 19:25:09
+
+Copyright (C) 2013 The Apache Software Foundation.
+This software consists of contributions made by many people; see the NOTICE
+file for more information.
+Subversion is open source software, see http://subversion.apache.org/
+
+The following repository back-end (FS) modules are available:
+
+* fs_base : Module for working with a Berkeley DB repository.
+* fs_fs : Module for working with a plain file (FSFS) repository.
+
+Cyrus SASL authentication is available.
+
+[root@iZ2850357ruZ etc]# 
+
+开始配置使用svn
+
+//先建目录
+mkdir /var/svn
+cd /var/svn
+//创建版本库
+svnadmin create /var/svn/project
+cd project
+//会看到自动生成的版本库文件
+conf  db  format  hooks  locks  README.txt
+
+二、创建用户组及用户：
+
+1、 进入版本库中的配置目录conf，此目录有三个文件： svn服务综合配置文件（svnserve.conf）、 用户名口令文件（passwd）、权限配置文件（authz）。
+
+2、修改权限配置文件：vim authz
+
+
+### This file is an example authorization file for svnserve.
+### Its format is identical to that of mod_authz_svn authorization
+### files.
+### As shown below each section defines authorizations for the path and
+### (optional) repository specified by the section name.
+### The authorizations follow. An authorization line can refer to:
+###  - a single user,
+###  - a group of users defined in a special [groups] section,
+###  - an alias defined in a special [aliases] section,
+###  - all authenticated users, using the '$authenticated' token,
+###  - only anonymous users, using the '$anonymous' token,
+###  - anyone, using the '*' wildcard.
+###
+### A match can be inverted by prefixing the rule with '~'. Rules can
+### grant read ('r') access, read-write ('rw') access, or no access
+### ('').
+
+[aliases]
+# joe = /C=XZ/ST=Dessert/L=Snake City/O=Snake Oil, Ltd./OU=Research Institute/CN=Joe Average
+
+[groups]
+# harry_and_sally = harry,sally
+# harry_sally_and_joe = harry,sally,&joe
+svngroup = svnuser1,svnuser2 //配置svn使用的用户组 并添加两个用户到该组
+
+# [/foo/bar]
+# harry = rw
+# &joe = r
+# * =
+
+# [repository:/baz/fuz]
+# @harry_and_sally = rw
+# * = r
+[young18:/]
+@svngroup = rw  //配置svn用户组的读写权限
+~                       
+
+3、配置用户名命令文件：vim passwd
+
+
+### This file is an example password file for svnserve.
+### Its format is similar to that of svnserve.conf. As shown in the
+### example below it contains one section labelled [users].
+### The name and password for each user follow, one account per line.
+
+[users]
+# harry = harryssecret
+# sally = sallyssecret
+svnuser1 = asd1453NMDsvnuser1  //添加svn用户 以及配置用户的密码
+svnuser2 = asd1453NMDsvnuser2
+
+4、配置SVN服务综合配置文件svnserve.conf
+
+### This file controls the configuration of the svnserve daemon, if you
+### use it to allow access to this repository.  (If you only allow
+### access through http: and/or file: URLs, then this file is
+### irrelevant.)
+
+### Visit http://subversion.apache.org/ for more information.
+
+[general]
+### The anon-access and auth-access options control access to the
+### repository for unauthenticated (a.k.a. anonymous) users and
+### authenticated users, respectively.
+### Valid values are "write", "read", and "none".
+### Setting the value to "none" prohibits both reading and writing;
+### "read" allows read-only access, and "write" allows complete
+### read/write access to the repository.
+### The sample settings below are the defaults and specify that anonymous
+### users have read-only access to the repository, while authenticated
+### users have read and write access to the repository.
+#匿名访问的权限，可以是read,write,none,默认为read
+ anon-access = none   //匿名用户访问权限 无
+ auth-access = write 普通用户访问权限 读写
+### The password-db option controls the location of the password
+### database file.  Unless you specify a path starting with a /,
+### the file's location is relative to the directory containing
+### this configuration file.
+### If SASL is enabled (see below), this file will NOT be used.
+### Uncomment the line below to use the default password file.
+ password-db = passwd     //svn使用的密码文件
+### The authz-db option controls the location of the authorization
+### rules for path-based access control.  Unless you specify a path
+### starting with a /, the file's location is relative to the the
+### directory containing this file.  If you don't specify an
+### authz-db, no path-based access control is done.
+### Uncomment the line below to use the default authorization file.
+ authz-db = authz    //svn使用的权限配置文件
+### This option specifies the authentication realm of the repository.
+### If two repositories have the same authentication realm, they should
+### have the same password database, and vice versa.  The default realm
+### is repository's uuid.
+ realm = /usr/local/nginx/html/svn/young18 //版本库所在路径
+### The force-username-case option causes svnserve to case-normalize
+### usernames before comparing them against the authorization rules in the
+### authz-db file configured above.  Valid values are "upper" (to upper-
+### case the usernames), "lower" (to lowercase the usernames), and
+### "none" (to compare usernames as-is without case conversion, which
+### is the default behavior).
+# force-username-case = none
+
+[sasl]
+### This option specifies whether you want to use the Cyrus SASL
+### library for authentication. Default is false.
+### This section will be ignored if svnserve is not built with Cyrus
+### SASL support; to check, run 'svnserve --version' and look for a line
+### reading 'Cyrus SASL authentication is available.'
+# use-sasl = true
+### These options specify the desired strength of the security layer
+### that you want SASL to provide. 0 means no encryption, 1 means
+### integrity-checking only, values larger than 1 are correlated
+### to the effective key length for encryption (e.g. 128 means 128-bit
+### encryption). The values below are the defaults.
+# min-encryption = 0
+# max-encryption = 256
+
+
+启动svn服务
+[root@iZ2850357ruZ conf]# svnserve -d -r /usr/local/nginx/html/svn
+[root@iZ2850357ruZ conf]# 
+
+
+启动时遇到问题 处理
+如果提示：
+
+svnserve: E000098: Can't bind server socket: Address already in use
+证明现在svn已经被启动了，由于我们修改了配置文件，因此要重启svn服务
+
+//查看svn服务详情
+ps aux | grep svn
+//将svn服务强制停止  其中790为svn服务的ID号，-9是kill的参数
+kill -9 790
+或者用
+
+killall svnserve
+
+bogon:~ lixiaoyan$ ps aux | grep svn
+lixiaoyan        3735   0.6  0.0  2434852    888 s000  S+    4:28下午   0:00.01 grep svn
+lixiaoyan        3453   0.0  0.0  2463980    500   ??  Ss    4:12下午   0:00.00 /Applications/Xcode.app/Contents/Developer/usr/bin/svnserve -d -r /Users/lixiaoyan/Desktop/svnlocal
+ -d [--daemon]            : daemon mode
+  -r [--root] ARG          : root of directory to serve
+再运行 svnserve -d -r /usr/local/nginx/html/svn，进行启动服务
+
+
+/*******************************************/
+svn使用中的问题
+配置防火墙端口 
+1
+2
+3
+4
+5
+[root@zck conf]# vi /etc/sysconfig/iptables
+添加以下内容：
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 3690 -j ACCEPT
+保存后重启防火墙
+[root@zck conf]# service iptables restart
+启动SVN 
+1
+svnserve -d -r /opt/svn/repositories
+查看SVN进程 
+1
+2
+[root@zck conf]# ps -ef|grep svn|grep -v grep
+root 12538 1 0 14:40 ? 00:00:00 svnserve -d -r /opt/svn/repositories
+检测SVN 端口 
+1
+2
+[root@zck conf]# netstat -ln |grep 3690
+tcp 0 0 0.0.0.0:3690 0.0.0.0:* LISTEN
+停止重启SVN 
+1
+2
+[root@zck password]# killall svnserve //停止
+[root@zck password]# svnserve -d -r /opt/svn/repositories // 启动
+
+测试 
+
+SVN服务已经启动，使用客户端测试连接。 
+客户端连接地址：svn://192.168.15.231 
+用户名/密码： zhoulf/123456 
+测试创建文件夹等操作。
+
+
+
+
+/***************************************/
+
+
+
+三，配置SVN服务器的HTTP支持（可以用浏览器看代码） 
+
+       详细配置请参考 http://www.blogjava.net/jasmine214--love/archive/2010/09/26/332989.html
+       1，修改httpd.conf，添加关于SVN服务器的内容
+                修改/etc/httpd/conf/httpd.conf。
+ 
+        2，重启HTTPD服务器
+                # service httpd restart
+ 
+        3，用浏览器访问http://192.168.1.5/test
+ 
+四，可能出现的问题 
+
+1. 如果外网不能正常访问，可能还需要作端口映射，对外网开放3690端口。
+    检查端口是否打开，可以用命令： telnet xxx.xxx.xxx.xxx 3690
+ 
+
+
+
