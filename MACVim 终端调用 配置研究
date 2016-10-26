@@ -1,0 +1,7 @@
+      MACVim 终端调用 配置研究
+
+       1、MacVim。使用Cocoa GUI，这是Mac上更新还很活跃的版本，也是Mac上最多人使用的版本。下载地址： http://code.google.com/p/macvim/
+
+         2、使用Carbon GUI的版本，但是这个版本目前基本上不再更新。下载地址： http://sourceforge.net/projects/macosxvim/files/
+
+         本文主要介绍MacVim，MacVim支持多窗口标签编辑以及全屏等新特性。下载了相应MacVim压缩包，解压以后将MacVim.app拖入/Applications目录下。启动MacVim，输入":h mvim", 按照提示，需要将mvim脚本文件拷贝到"/usr/local/bin"目录下。打开终端,输入命令 "cd /usr/local"以及"sudo mkdir bin",最后输入"sudo cp -f /Users/ericli/SoftWare/MacVim-snapshot-66/mvim  /usr/local/bin/",这样就可以在终端输入命令"mvim"来快速启动MacVim 。 如果你不想将 MacVim.app放到/Applications目录下，只需要在终端设置 VIM_APP_DIR变量为你想放置MacVim.app的目录并导入到$HOME/.bash_profile中即可，比如：export VIM_APP_DIR= $HOME/SoftWare/MacVim-snapshot-66/。 在MacVim输入":h macvim",可以查看MacVim的使用帮助介绍文档。
