@@ -1,4 +1,34 @@
 
+这里之前虽然配置 并远程成功但是 对应的svn服务目录关系不对 解决如下
+关闭svn服务进程
+[root@iZ2850357ruZ conf]# killall svnserve
+[root@iZ2850357ruZ conf]# ps -ef|grep svn|grep -v grep
+重新启动进程
+[root@iZ2850357ruZ conf]# svnserve -d --listen-port 3690 -r /usr/local/nginx/html/svn --log-file /usr/local/nginx/html/svn/tmp/logs/svn.log --pid-file /usr/local/nginx/html/svn/tmp/logs/svn.pid
+
+注：-d参数效果同于--daemon 
+   -r参数效果同于--root 
+svnserve 将会在端口 3690 等待请求， 
+    --daemon（两个短横线）选项告诉 svnserve 以守护进程方式运行，这样在手动终止之前不会退出。不要关闭命令行窗口，关闭窗口会把 svnserve 停止。 
+    --root选项设置根位置来限制服务器的访问目录，从而增加安全性和节约输入svnserve URL的时间 
+    如果不加root参数，服务url为：svn://121.42.156.197/svn/repos 
+    而如果加上root参数,服务url为：svn://121.42.156.197/young18
+    如果加上root参数 并且-r /usr/local/nginx/html/svn/young18 这时的服务url为:svn://121.42.156.197
+
+    此处的启动配置会影响服务url，如果输入url错误，会导致访问的时候出现异常 
+
+[root@iZ2850357ruZ conf]# 
+----------------------------svn can  not connect to host-------
+    Error: Can't connect to host '': 由于目标机器拒绝，无法连接。 
+    解决：首先测试svn的3690端口是否打开：telnet localhost 3690 
+----------------------------
+
+/Users/lixiaoyan/Desktop/intelEMSVNFiles/centossvnuser1
+
+最终成功 svn://svnuser1@121.42.156.197:3690
+
+
+------
 先了解如何使用SVN客户端： 
 1、服务器上构建一个版本库(或项目)后，需要SVN客户端进行连接。最直接的做法就是：checkout(SVN检出)，
 通过认证后，可以把具体的目录或是文件放到本地！
