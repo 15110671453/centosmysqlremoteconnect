@@ -1,4 +1,34 @@
 
+先了解如何使用SVN客户端： 
+1、服务器上构建一个版本库(或项目)后，需要SVN客户端进行连接。最直接的做法就是：checkout(SVN检出)，
+通过认证后，可以把具体的目录或是文件放到本地！
+此时，系统会在你指定的路径建立一个同名版本库目录(当然目录名你也可以指定)。 
+ 
+2、在这个版本库目录中，我们可以增加文件，修改原有文件！修改完之后，使用同一个版本库的人不一定知道
+你修改了，所以你要commit(提交)你的修改！ 
+ 
+3、其他使用相同版本库的用户，在使用update更新之后，SVN客户端就自己的下载了更新(增加或是被修改)的
+文件到本地版本库目录；当然，你在update之后，也会下载别人更改过的文件。 
+ 
+4、通常一个文件被多个人修改之后，基本上已面目全非，那如果我想看看这个文件被几个人修改过，并且它是
+第几次修改，这就需要看跟这个文件相关的日志了。 
+ 
+ 
+个人见解： 
+1、svn客户端把文件上传到服务器，把一个无状态的文件变成一个有状态的文件，用数字编号进行表示。 
+----------------------------------------------
+找到了subversion的安装目录
+[root@iZ2850357ruZ conf]# cd /root/.subversion/
+[root@iZ2850357ruZ .subversion]# ls -la
+total 36
+drwxr-xr-x  3 root root 4096 Oct 27 09:27 .
+dr-xr-x--- 24 root root 4096 Oct 27 09:27 ..
+drwx------  6 root root 4096 Oct 27 09:27 auth
+-rw-r--r--  1 root root 6672 Oct 27 09:27 config
+-rw-r--r--  1 root root 4276 Oct 27 09:27 README.txt
+-rw-r--r--  1 root root 7679 Oct 27 09:27 servers
+[root@iZ2850357ruZ .subversion]# 
+-------------------------------------------------
 
 121.42.156.197 
 /usr/local/nginx/html/svn
@@ -126,10 +156,73 @@ Cyrus SASL authentication is available.
 开始配置使用svn
 
 //先建目录
-mkdir /var/svn
+mkdir /usr/local/nginx/html/svn
+
+---------------------------------
+
+[root@iZ2850357ruZ html]# cd svn/
+[root@iZ2850357ruZ svn]# ./svnadmin create --fs-type fsfs /usr/local/nginx/html/svn/
+-bash: ./svnadmin: No such file or directory
+[root@iZ2850357ruZ svn]# svnadmin create --fs-type fsfs /usr/local/nginx/html/svn/
+svnadmin: E200011: Repository creation failed
+svnadmin: E200011: Could not create top-level directory
+svnadmin: E200011: '/usr/local/nginx/html/svn' exists and is non-empty
+[root@iZ2850357ruZ svn]# svnadmin create --fs-type fsfs /usr/local/nginx/html/svn/young18
+svnadmin: E165002: '/usr/local/nginx/html/svn/young18' is an existing repository
+
+创建版本库并指定数据存储模式FSFS
+[root@iZ2850357ruZ svn]# svnadmin create --fs-type fsfs /usr/local/nginx/html/svn/young20
+[root@iZ2850357ruZ svn]# cd young20/
+[root@iZ2850357ruZ young20]# ls -la
+total 32
+drwxr-xr-x 6 root root 4096 Oct 27 10:27 .
+drwxrwxrwx 4 root root 4096 Oct 27 10:27 ..
+drwxr-xr-x 2 root root 4096 Oct 27 10:27 conf
+drwxr-sr-x 6 root root 4096 Oct 27 10:27 db
+-r--r--r-- 1 root root    2 Oct 27 10:27 format
+drwxr-xr-x 2 root root 4096 Oct 27 10:27 hooks
+drwxr-xr-x 2 root root 4096 Oct 27 10:27 locks
+-rw-r--r-- 1 root root  229 Oct 27 10:27 README.txt
+[root@iZ2850357ruZ young20]# 
+
+创建项目临时目录
+
+[root@iZ2850357ruZ svn]# mkdir -p tmp/{trunk,tags,branches}
+[root@iZ2850357ruZ svn]# ls -la
+total 20
+drwxrwxrwx 5 root root   4096 Oct 27 10:29 .
+drwxr-xr-x 6 www  ftpdyn 4096 Oct 26 15:21 ..
+drwxr-xr-x 5 root root   4096 Oct 27 10:29 tmp
+drwxrwxrwx 6 root root   4096 Oct 26 15:22 young18
+drwxr-xr-x 6 root root   4096 Oct 27 10:27 young20
+[root@iZ2850357ruZ svn]# cd tmp/
+[root@iZ2850357ruZ tmp]# ls -la
+total 20
+drwxr-xr-x 5 root root 4096 Oct 27 10:29 .
+drwxrwxrwx 5 root root 4096 Oct 27 10:29 ..
+drwxr-xr-x 2 root root 4096 Oct 27 10:29 branches
+drwxr-xr-x 2 root root 4096 Oct 27 10:29 tags
+drwxr-xr-x 2 root root 4096 Oct 27 10:29 trunk
+
+复制项目文件到trunk目录下
+
+导入需要管理的项目到版本库young20下
+svn import /usr/local/nginx/html/svn/tmp/ file:///usr/local/nginx/html/svn/young20
+
+检查是否导入成功
+
+svn list --verbose file:///usr/local/nginx/html/svn/young20/
+
+修改版本库权限
+chmod 770 young20
+chmod -R g+w young20
+
+
+---------------------------------
+
 cd /var/svn
 //创建版本库
-svnadmin create /var/svn/project
+svnadmin create /usr/local/nginx/html/svn/project
 cd project
 //会看到自动生成的版本库文件
 conf  db  format  hooks  locks  README.txt
@@ -257,7 +350,7 @@ svnuser2 = asd1453NMDsvnuser2
 # min-encryption = 0
 # max-encryption = 256
 
-
+------------------------------------------------------------
 启动svn服务
 [root@iZ2850357ruZ conf]# svnserve -d -r /usr/local/nginx/html/svn
 [root@iZ2850357ruZ conf]# 
@@ -284,6 +377,83 @@ lixiaoyan        3453   0.0  0.0  2463980    500   ??  Ss    4:12下午   0:00.0
   -r [--root] ARG          : root of directory to serve
 再运行 svnserve -d -r /usr/local/nginx/html/svn，进行启动服务
 
+
+----------------------------------------------
+重新启动svn服务
+[root@iZ2850357ruZ tmp]# killall svnserve
+[root@iZ2850357ruZ tmp]# ps -ef|grep svn|grep -v grep
+[root@iZ2850357ruZ tmp]# svnserve -d --listen-port 3690 -r /usr/local/nginx/html/svn/young18 --log-file /usr/local/nginx/html/svn/tmp/logs/svn.log --pid-file /usr/local/nginx/html/svn/tmp/logs/svn.pid
+svn: E000002: Can't open file '/usr/local/nginx/html/svn/tmp/logs/svn.log': No such file or directory
+[root@iZ2850357ruZ tmp]# mkdir logs
+[root@iZ2850357ruZ tmp]# svnserve -d --listen-port 3690 -r /usr/local/nginx/html/svn/young18 --log-file /usr/local/nginx/html/svn/tmp/logs/svn.log --pid-file /usr/local/nginx/html/svn/tmp/logs/svn.pid
+[root@iZ2850357ruZ tmp]# svnserve -d --listen-port 3691 -r /usr/local/nginx/html/svn/young20 --log-file /usr/local/nginx/html/svn/tmp/logs/svn.log --pid-file /usr/local/nginx/html/svn/tmp/logs/svn.pid
+[root@iZ2850357ruZ tmp]# 
+
+
+[root@iZ2850357ruZ tmp]# svn checkout svn://121.42.156.197
+svn: E200002: Unable to connect to a repository at URL 'svn://121.42.156.197'
+svn: E200002: /usr/local/nginx/html/svn/young18/conf/svnserve.conf:19: Option expected
+[root@iZ2850357ruZ tmp]# 
+
+解决修改注释后的 配置 要顶格写 不要有空格
+
+[root@iZ2850357ruZ conf]# svn checkout svn://121.42.156.197
+Authentication realm: <svn://121.42.156.197:3690> /usr/local/nginx/html/svn
+Password for 'root':  这输入root用户的密码
+Authentication realm: <svn://121.42.156.197:3690> /usr/local/nginx/html/svn
+Username: svnuser1   这里输入svn用户的用户名
+Password for 'svnuser1':  这里输入svn用户的密码
+
+-----------------------------------------------------------------------
+ATTENTION!  Your password for authentication realm:
+
+   <svn://121.42.156.197:3690> /usr/local/nginx/html/svn
+
+can only be stored to disk unencrypted!  You are advised to configure
+your system so that Subversion can store passwords encrypted, if
+possible.  See the documentation for details.
+
+You can avoid future appearances of this warning by setting the value
+of the 'store-plaintext-passwords' option to either 'yes' or 'no' in
+'/root/.subversion/servers'.
+-----------------------------------------------------------------------
+Store password unencrypted (yes/no)? n
+svn: E170001: Authorization failed
+[root@iZ2850357ruZ conf]# svn checkout svn://121.42.156.197
+Authentication realm: <svn://121.42.156.197:3690> /usr/local/nginx/html/svn
+Password for 'svnuser1': 
+
+-----------------------------------------------------------------------
+ATTENTION!  Your password for authentication realm:
+
+   <svn://121.42.156.197:3690> /usr/local/nginx/html/svn
+
+can only be stored to disk unencrypted!  You are advised to configure
+your system so that Subversion can store passwords encrypted, if
+possible.  See the documentation for details.
+
+You can avoid future appearances of this warning by setting the value
+of the 'store-plaintext-passwords' option to either 'yes' or 'no' in
+'/root/.subversion/servers'.
+注意!  你的密码，对于认证域:
+   <svn://127.0.0.1:3690> b44df301-1065-4582-8133-70b14c19286e
+只能明文保存在磁盘上!  如果可能的话，请考虑配置你的系统，让 Subversion
+可以保存加密后的密码。请参阅文档以获得详细信息。
+你可以通过在“/root/.subversion/servers”中设置选项“store-plaintext-passwords”为“yes”或“no”，
+来避免再次出现此警告。
+-----------------------------------------------------------------------
+保存未加密的密码(yes/no)?yes
+取出版本 0。
+-----------------------------------------------------------------------
+Store password unencrypted (yes/no)? y
+svn: E170001: Authorization failed
+[root@iZ2850357ruZ conf]# svn checkout svn://121.42.156.197
+svn: E170001: Authorization failed
+[root@iZ2850357ruZ conf]# svn checkout svn://121.42.156.197
+svn: E170001: Authorization failed
+[root@iZ2850357ruZ conf]# 
+[root@iZ2850357ruZ conf]# svn checkout svn://121.42.156.197:3690 --username svnuser1 --password asd1453NMDsvnuser1
+svn: E170001: Authorization failed
 
 /*******************************************/
 svn使用中的问题
@@ -324,7 +494,31 @@ SVN服务已经启动，使用客户端测试连接。
 用户名/密码： zhoulf/123456 
 测试创建文件夹等操作。
 
+/****************************************/
 
+
+四．启动和停止subversion
+1.启动svn
+
+1
+# ./svnserve -d --listen-port 9999 -r /www/svn/repository --log-file /usr/local/subversion-1.6.13/logs/svn.log --pid-file /usr/local/subversion-1.6.13/logs/svn.pid
+-d 以daemon方式运行
+--listen-port 监听端口号
+-r 指定目录
+--log-file 指定日志文件
+--pid-file 指定pid文件
+2.停止svn
+
+1
+# kill -9 `cat /usr/local/subversion-1.6.13/logs/svn.pid`
+五．客户端访问
+1.Windows下安装TortoiseSVN
+2.Linux下
+
+1
+# svn checkout svn://192.168.50.10:9999
+
+/***************************************/
 
 
 /***************************************/
@@ -348,5 +542,213 @@ SVN服务已经启动，使用客户端测试连接。
     检查端口是否打开，可以用命令： telnet xxx.xxx.xxx.xxx 3690
  
 
+---------------------------------XXXXXXXXXXXXXXXX---------------------
+客户端：
+客户端需要安装subversion。
+错误1：svn: 无法连接主机“172.16.10.63”: 没有到主机的路由
+原因是服务器防火墙没有关，可以关掉防火墙，或者 vi /etc/sysconfig/iptables加上一条
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 3690 -j ACCEPT
+重启防火墙就OK了
+第一次登陆svn服务器会将密码信息存放在用户路径下的.subversion文件夹下，路径为/root/.subversion/。
+[root@bogon ~]# svn co svn://172.16.10.63/app
+//co为checkout的简写，即提取
+认证领域: <svn://172.16.10.63:3690> b44df301-1065-4582-8133-70b14c19286e
+“root”的密码:
+认证领域: <svn://172.16.10.63:3690> b44df301-1065-4582-8133-70b14c19286e
+用户名: qhy
+“qhy”的密码:
+
+
+---
+维护阶段：
+[root@bogon conf]# vi authz 
+……
+[groups]
+# harry_and_sally = harry,sally
+# harry_sally_and_joe = harry,sally,&joe
+svngroup = svnuser1
+……
+[/]
+svnuser1 = rw
+* =
+[root@bogon conf]# vi passwd 
+[users]
+# harry = harryssecret
+# sally = sallyssecret
+svnuser1 = asd1453NMDsvnuser1
+vi svnserve.conf
+[general]配置段中配置行格式如下：
+<配置项> = <值>
+passwd
+[users]配置段的配置行格式如下：
+<用户名> = <口令>
+注意：配置行中的口令为未经过任何处理的明文。
+authz
+[groups]配置段中配置行格式如下：
+<用户组> = <用户列表>
+版本库路径权限段的段名格式如下：
+[<版本库名>:<路径>]
+版本库路径权限段中配置行格式有如下三种：
+<用户名> = <权限>
+<用户组> = <权限>
+* = <权限>
+-----------------------------+++++++++++++++++++-----------------
+
+
+svnserve是SVN自带的一个轻型服务器，客户端通过使用以svn://或svn+ssh://为前缀的URL来访问svnserve服务器，实现远程访问SVN版本库。
+
+    svnserve可以通过配置文件来设置用户和口令，以及按路径控制版本库访问权限。本文详细分析了svnserve配置文件格式，并说明如何使用配置文件控制版本库访问权限。
+
+    本文介绍SVN的版本为1.4.4。
+
+1) svnserve配置文件概述
+
+    svnserve配置文件通常由以下3个文本文件组成：
+    svn服务配置文件，该文件版本库目录的conf目录下，文件名为svnserve.conf。
+    用户名口令文件，该文件名在文件svnserve.conf中指定，缺省为同目录下的passwd。
+    权限配置文件，该文件名也在文件svnserve.conf中指定，缺省为同目录下的authz。
+
+2) svn服务配置文件
+
+    svn服务配置文件为版本库目录中的文件conf/svnserve.conf。该文件仅由一个[general]配置段组成。
+
+    [general]配置段中配置行格式如下：
+        <配置项> = <值>
+
+    配置项分为以下5项：
+    
+    anon-access  控制非鉴权用户访问版本库的权限。取值范围为"write"、"read"和"none"。
+                 即"write"为可读可写，"read"为只读，"none"表示无访问权限。
+                 缺省值：read
+
+    auth-access  控制鉴权用户访问版本库的权限。取值范围为"write"、"read"和"none"。
+                 即"write"为可读可写，"read"为只读，"none"表示无访问权限。
+                 缺省值：write
+
+    password-db  指定用户名口令文件名。除非指定绝对路径，否则文件位置为相对conf
+                 目录的相对路径。
+                 缺省值：passwd
+
+    authz-db     指定权限配置文件名，通过该文件可以实现以路径为基础的访问控制。
+                 除非指定绝对路径，否则文件位置为相对conf目录的相对路径。
+                 缺省值：authz
+
+    realm        指定版本库的认证域，即在登录时提示的认证域名称。若两个版本库的
+                 认证域相同，建议使用相同的用户名口令数据文件。
+                 缺省值：一个UUID(Universal Unique IDentifier，全局唯一标示)。
+
+    【说明】版本库认证域
+    在使用svn客户端访问svnserve服务器时，若需要用户登录，则提示信息如下：
+        [root@test root]# svn list svn://192.168.3.45/test
+        Authentication realm: <svn://192.168.3.45:3690> 0d545a49-4038-0410-99b4-c66dc73f754e
+        Password for 'root': 
+    在上述第2行"Authentication realm: <svn://192.168.3.45:3690>"之后显示的字符串为认证域名称。如果在配置文件中为设定认证域，就会提示一个UUID，如上述所示。
+    如果在配置文件中指定了如下配置项：
+        realm = test
+    将在svn客户端提示如下：
+        [root@test root]# svn list svn://192.168.3.45/test
+        Authentication realm: <svn://192.168.3.45:3690> test
+        Password for 'root': 
+
+    例1：svn服务配置文件conf/svnserve.conf的内容如下：
+        [general]
+        anon-access = none
+        auth-access = write
+        password-db = http://www.cnblogs.com/conf/passwd
+        authz-db = http://www.cnblogs.com/conf/authz
+        realm = test
+    
+    上述配置文件设定非鉴权用户无权限访问该版本库；鉴权用户可对版本库进行读写；用户名口令文件为相对版本库conf目录的文件"http://www.cnblogs.com/conf/passwd"；权限配置文件为相对版本库conf目录的文件"http://www.cnblogs.com/conf/authz"；版本库的认证域为"test"。
+
+3) 用户名口令文件
+
+    用户名口令文件由svnserve.conf的配置项password-db指定，缺省为conf目录中的passwd。该文件仅由一个[users]配置段组成。
+
+    [users]配置段的配置行格式如下：
+        <用户名> = <口令>
+    注意：配置行中的口令为未经过任何处理的明文。
+
+    例2：用户名口令文件conf/passwd的内容如下：
+        [users]
+        admin = admin
+        thinker = 123456
+        
+        该文件中配置了两个用户，用户名分别为"admin"和"thinker"。其中"admin"用户的口令为"admin"；"thinker"用户的口令为"123456"。
+
+4) 权限配置文件
+
+    权限配置文件由svnserve.conf的配置项authz-db指定，缺省为conf目录中的authz。该配置文件由一个[groups]配置段和若干个版本库路径权限段组成。
+
+    [groups]配置段中配置行格式如下：
+        <用户组> = <用户列表>
+    用户列表由若干个用户组或用户名构成，用户组或用户名之间用逗号","分隔，引用用户组时要使用前缀"@"(如：引用用户组"all"要使用字符串"@all")。
+
+    版本库路径权限段的段名格式如下：
+        [<版本库名>:<路径>]
+    如版本库abc路径/tmp的版本库路径权限段的段名为"[abc:/tmp]"。
+    可省略段名中的版本库名。若省略版本库名，则该版本库路径权限段对所有版本库中相同路径的访问控制都有效。如：段名为"[/tmp]"的版本库路径权限段设置了所有引用该权限配置文件的版本库中目录"/tmp"的访问权限。
+
+    版本库路径权限段中配置行格式有如下三种：
+        <用户名> = <权限>
+        <用户组> = <权限>
+        * = <权限>
+    其中，"*"表示任何用户；权限的取值范围为''、'r'和'rw'，''表示对该版本库路径无任何权限，'r'表示具有只读权限，'rw'表示有读写权限。
+    注意：每行配置只能配置单个用户或用户组。
+
+    例3：权限配置文件conf/authz的内容如下：
+        [groups]
+        g_admin = admin,thinker
+
+        [admintools:/]
+        @g_admin = rw
+        * =
+
+        [test:/home/thinker]
+        thinker = rw
+        * = r
+
+    在上述配置文件中，定义了一个用户组"g_admin"，该用户组包含用户"admin"和"thinker"。然后定义了2个版本库路径权限段。其中，版本库"admintools"只有用户组"g_admin"可读写，其他用户无任何权限；版本库"test"中路径"/home/thinker"只有用户"thinker"有读写权限，其他用户只有可读权限。
+
+5) 总结
+
+-----------------------------
+A.测试1：  
+   ①运行svnserve -d -r f:\svn\repos\jmxDemo //指定jmxDemo根目录为服务的根目录  
+   ②运行svn://localhost，可以正常访问修改jmxDemo  
+   ③运行svn://localhost/jmxDemo，出现：'svn://localhost/jmxDemo' non-existent in  
+  
+B.测试2：  
+   ①运行svnserve -d -r f:\svn\repos //指定jmxDemo上层目录为服务的根目录  
+   ②运行svn://localhost/jmxDemo，可以正常访问修改Repository  
+   ③运行svn://localhost，出现：Error * No repository found in 'svn://localhost'   
+   
+C.结论：  
+   ①SVN服务启动时指定的根目录不同，会影响相同URL的访问结果  
+   ②SVN在访问指定路径时会从服务的根目录下去寻找，即基于我们启动服务时指定的根目录  
+   ③svn://localhost指向默认的jmxDemo，svn://localhost/jmxDemo指向jmxDemo  
+   ④测试情况一的步骤③失败是因为我们已经把路径直接指向了jmxDemo的根目录  
+   ⑤测试情况二的步骤③失败是因为我们只是把路径指向了jmxDemo的上层目录  
+
+   -----------------------成功解决--------Error: Authorization failed ---------------------
+
+[root@iZ2850357ruZ ~]# cd /usr/local/nginx/html/svn/young18/
+[root@iZ2850357ruZ young18]# cd conf/
+[root@iZ2850357ruZ conf]# vi authz 
+[root@iZ2850357ruZ conf]# svn checkout svn://121.42.156.197:3690 --username svnuser1 --password asd1453NMDsvnuser1
+Checked out revision 0.
+[root@iZ2850357ruZ conf]# 
+     导入的时候可能出现的问题： 
+    Error: Authorization failed 
+    解决：权限问题 
+这个问题弄了蛮久，一直以为是拼写url的问题，找了半天没找到，然后确认问题是权限配置错误，查了半天也没看出来，后来弄清楚，是因为导入涉及到在根下写东西，所以必须要有根下的w权限，添加如下配置后问题解决： 
+Java代码  收藏代码
+[/]  
+cjy = rw  
+
+注意： 
+版本库与导入项目最好不要重名，如果重名： 
+比如把arm下的东东导入到了这个版本库：svn://localhost/arm。 
+而配置权限的时候，[arm:/]这才代表工程的根目录，即：svn://localhost/arm 
+要想配到权限到目录下，就得这么写： [arm:/arm/]，不然出错，且问题不容易排出 
 
 

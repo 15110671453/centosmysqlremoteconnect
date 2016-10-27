@@ -1,0 +1,39 @@
+让PHP去执行svn命令踩过的坑  
+
+2013-12-08 15:57:21|  分类： web开发记录 |  标签：subversion  svn  null  store-plaintext-pass   |举报|字号 订阅
+    
+  下载LOFTER我的照片书  |
+环境：X86的 centos 
+鉴于，开发的时候，经常是将svn的代码checkout到linux服务器下开发的，然后开发的人，又是直接通过sublime text2的sftp把代码从服务器下载下来进行的修改。然后，每次提交都要通过ssh到服务器上去执行svn commit 等命令。可能，熟悉linux的开发人员都没有什么问题，就是麻烦了点。但是，碰到不怎么熟悉linux的，就是痛苦的事情。为了解放大家的痛苦，然后就想直接通过php去执行svn的命令吧。
+~~~~又有人问了，为什么不直接checkout到windows了。呵呵~~因为，开发的时候，需要测试的时候。windows的环境很难和linux的环境做到一致呀。
+
+让PHP去执行svn命令踩过的坑 - kaizhu_QIN - kaizhu_Qin
+
+下面是我在前期测试的时候，遇到的问题：
+一、权限问题
+让PHP去执行svn命令踩过的坑 - kaizhu_QIN - kaizhu_Qin
+让PHP去执行svn命令踩过的坑 - kaizhu_QIN - kaizhu_Qin
+ php的代码在服务器上是以apache的用户去执行的。所以，我们要将需要操作的目录设置个apache可以去操作。
+让PHP去执行svn命令踩过的坑 - kaizhu_QIN - kaizhu_Qin
+很高兴，以为这样子就可以了。权限问题是没有了。但是，刷新下发现页面出来了这样的错误。
+
+二、svn的密码的缓存问题
+ ----------------------------------------------------------------------- ATTENTION! Your password for authentication realm: USVN-online can only be stored to disk unencrypted! You are advised to configure your system so that Subversion can store passwords encrypted, if possible. See the documentation for details. You can avoid future appearances of this warning by setting the value of the 'store-plaintext-passwords' option to either 'yes' or 'no' in '/var/www/.subversion/servers'. ----------------------------------------------------------------------- Store password unencrypted (yes/no)? svn: Can't read stdin: End of file found "
+这是，由于svn的密码的缓存问题导致的。
+
+上面的提示信息，已经说了解决方案。是在/var/www/.subversion/servers文件下指明 'store-plaintext-passwords' option to either 'yes' or 'no'  可以是yes也可以是no 就是要明确指明这个option就可以了。
+发现/var/www没有.subversion这个文件夹
+让PHP去执行svn命令踩过的坑 - kaizhu_QIN - kaizhu_Qin
+
+可以在 ~/.subversion下找到我们想要的servers这个文件。复制一份到/var/www/.subversion
+让PHP去执行svn命令踩过的坑 - kaizhu_QIN - kaizhu_Qin
+有啦。。
+让PHP去执行svn命令踩过的坑 - kaizhu_QIN - kaizhu_Qin
+我们vi 下servers加入下面的选项
+让PHP去执行svn命令踩过的坑 - kaizhu_QIN - kaizhu_Qin
+让PHP去执行svn命令踩过的坑 - kaizhu_QIN - kaizhu_Qin
+ 问题解决了。。
+还有一种解决的办法就是直接在执行svn命令的时候，加上 --no-auth-cache 。这个方法更加简单啦。。
+让PHP去执行svn命令踩过的坑 - kaizhu_QIN - kaizhu_Qin
+是不是，感动到噼里啪啦。
+希望能帮助到大家跳过这些坑~~~~嚯嚯~~~~迫不及待去写个脚本，解放生产力！！！
