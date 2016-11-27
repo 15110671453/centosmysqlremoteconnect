@@ -39,7 +39,7 @@ mysql> show databases;
 mysql> 
 
 
-最后记得重启mysql服务 ervice mysqld restart；
+最后记得重启mysql服务 service mysqld restart；
 
 
 
