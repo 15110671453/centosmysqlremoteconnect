@@ -1,0 +1,49 @@
+mysqlworkbench 远程ssh链接阿里云数据库
+
+
+报错
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+It is also possible that a host key has just been changed.
+The fingerprint for the ECDSA key sent by the remote host is
+SHA256:3GITtsPw5lfcdp5KXLwC8p6JYmL5DzBVp6jqMHT/jqU.
+Please contact your system administrator.
+Add correct host key in /Users/admindyn/.ssh/known_hosts to get rid of this message.
+Offending RSA key in /Users/admindyn/.ssh/known_hosts:6
+ECDSA host key for 121.42.156.197 has changed and you have requested strict checking.
+Host key verification failed.
+
+[进程已完成]
+解决方法：：
+
+到对应目录下
+/Users/admindyn/.ssh/known_hosts 
+
+将对应远程IP的钥匙串信息删除 再ssh连接一次 输入账号密码 后得到新的钥匙串信息 以后登陆就正常了
+由于服务器端更新了ssh 客户端保留的ssh需要更新后才能登陆
+
+记录ssh账号 dynroot 密码 asd1453NMDvnc
+
+dynroot@121.42.156.197's password: 
+Permission denied, please try again.
+dynroot@121.42.156.197's password: 
+Last failed login: Tue Apr 11 15:52:11 CST 2017 from 1.119.129.17 on ssh:notty
+There were 4 failed login attempts since the last successful login.
+Last login: Mon Nov 21 09:22:21 2016
+
+Welcome to aliyun Elastic Compute Service!
+
+[dynroot@iZ2850357ruZ ~]$ asd1453NMDvnc
+
+
+
+
+
+mysql 阿里云密码 asd1453nmd
+
+公司盒子密码 asd1453NMDmysql
+
+个人mac密码 dyn123456
